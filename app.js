@@ -4,6 +4,7 @@ const placesRoutes = require('./routes/places-route');
 const usersRoutes = require('./routes/users-routes');
 const mongoose = require('mongoose');
 const HttpError = require('./models/http-error');
+const { mongoDbKey } = require('./util/keys');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -26,8 +27,6 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(
-    'mongodb+srv://elvisonob:University21@cluster0.edzz7h9.mongodb.net/placePractice?retryWrites=true&w=majority'
-  )
+  .connect(mongoDbKey)
   .then(() => app.listen(5000))
   .catch((err) => console.log(err));

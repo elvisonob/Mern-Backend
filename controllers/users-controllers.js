@@ -11,12 +11,21 @@ const DUMMY_USERS = [
   },
 ];
 
-const getUsers = (req, res, next) => {
-  res.status(200).json({ users: DUMMY_USERS });
+const getUsers = async (req, res, next) => {
+  let allUsers;
+  try {
+    allUsers = await User.find({}, '-password');
+  } catch (err) {
+    const error = new HttpError('No users found', 500);
+    return next(error);
+  }
+  res.status(200).json({
+    allUsers: allUsers.map((user) => user.toObject({ getters: true })),
+  });
 };
 
 const signup = async (req, res, next) => {
-  const { name, email, password, image, places } = req.body;
+  const { name, email, password, image } = req.body;
   let existingUser;
   try {
     existingUser = await User.findOne({ email });
@@ -33,7 +42,7 @@ const signup = async (req, res, next) => {
     email,
     password,
     image,
-    places,
+    places: [],
   });
 
   try {
@@ -45,14 +54,21 @@ const signup = async (req, res, next) => {
   res.status(201).json(createdUser);
 };
 
-const login = (req, res, next) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
-  const identifiedUser = DUMMY_USERS.find((u) => u.email === email);
-  if (!identifiedUser || identifiedUser.password !== password) {
-    throw new HttpError('Could not find email', 401);
-  }
 
-  res.json({ message: 'Welcome mate' });
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError('User Information is not available', 500);
+    return next(error);
+  }
+  if (!existingUser || existingUser.password !== password) {
+    const error = new HttpError('User credentials is not correct', 401);
+    return next(error);
+  }
+  res.status(200).json({ message: 'logged in' });
 };
 
 exports.signup = signup;
